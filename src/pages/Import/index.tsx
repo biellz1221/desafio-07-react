@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import filesize from 'filesize';
@@ -20,22 +20,46 @@ interface FileProps {
 
 const Import: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<FileProps[]>([]);
+  const [alertUpload, setAlertUpload] = useState('');
+  const [timer, setTimer] = useState(10);
   const history = useHistory();
 
   async function handleUpload(): Promise<void> {
-    // const data = new FormData();
+    const data = new FormData();
 
-    // TODO
-
+    if (uploadedFiles) {
+      uploadedFiles.forEach(file => {
+        data.append('file', file.file);
+      });
+    }
     try {
-      // await api.post('/transactions/import', data);
+      await api.post('/transactions/import', data);
+      setAlertUpload('Importado com Sucesso');
+      setTimeout(() => {
+        history.push('/');
+      }, 10000);
     } catch (err) {
-      // console.log(err.response.error);
+      console.log(err.response.error);
     }
   }
 
+  useEffect(() => {
+    setTimeout(() => {
+      setTimer(timer - 1);
+    }, 1000);
+  }, [timer]);
+
   function submitFile(files: File[]): void {
-    // TODO
+    const fProps: FileProps[] = files.map(file => {
+      return {
+        file,
+        name: file.name,
+        readableSize: file.size.toString(),
+      };
+    });
+    console.log(files);
+    console.log(fProps);
+    setUploadedFiles(fProps);
   }
 
   return (
@@ -56,7 +80,15 @@ const Import: React.FC = () => {
               Enviar
             </button>
           </Footer>
+          {alertUpload && (
+            <p>
+              {alertUpload}
+              <br />
+              Você será redirecionado em: {timer}
+            </p>
+          )}
         </ImportFileContainer>
+        {/* <FileList files={uploadedFiles} /> */}
       </Container>
     </>
   );
